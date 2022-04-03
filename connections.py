@@ -16,7 +16,7 @@ tables = []
 
 EIP_PB = pd.DataFrame(
             data = 2*np.eye(18),
-            columns = PB_labels, 
+            columns = PB_labels,
             index = EIP_labels)
 tables.append(EIP_PB)
 
@@ -27,7 +27,7 @@ PEI_PB = pd.DataFrame(
 tables.append(PEI_PB)
 
 data = np.zeros((len(PEN_labels), len(PB_labels)))
-data[:8,:8] = np.diag([1]*8)
+data[:8, :8] = np.diag([1]*8)
 data[8:, -8:] = np.diag([1]*8)
 PEN_PB = pd.DataFrame(
             data = data,
@@ -36,7 +36,7 @@ PEN_PB = pd.DataFrame(
 tables.append(PEN_PB)
 
 data = np.zeros((len(EIP_labels), len(EBC_labels)))
-data[0,0] = 1
+data[0, 0] = 1
 data[-1, -1] = 1
 for row in range(1, 9):
     data[row, (2*row - 2) % len(EBC_labels)] = 1
@@ -96,12 +96,12 @@ PEI_EIP = pd.DataFrame(
 tables.append(PEI_EIP)
 
 data = np.zeros((len(PEN_labels), len(EIP_labels)))
-for k in [-7, -8, 2, 10, 11]:
+for k in [-7, -8, 1, 10, 11]:
     data += np.diag(np.ones(len(EIP_labels) - abs(k)), k = k)[:len(PEI_labels)]
 for row in range(8):
-    data[row, row + 3] = 1
+    data[row, row + 2] = 1
 for row in range(8, 16):
-    data[row, row + 1] = 1
+    data[row, row ] = 1
 data[8, -2] = 1
 data[7, 1] = 1
 PEN_EIP = pd.DataFrame(
@@ -123,8 +123,8 @@ tables.append(EIP_PEI)
 # R_PEI to PEI
 
 data = np.zeros((len(EIP_labels), len(PEN_labels)))
-data[:8,:8] = np.eye(8)
-data[-8:,-8:] = np.eye(8)
+data[:8, :8] = np.eye(8)
+data[-8:, -8:] = np.eye(8)
 EIP_PEN = pd.DataFrame(
             data = data,
             columns = PEN_labels,
@@ -149,4 +149,3 @@ if __name__ == '__main__':
             print(s[:5], end='')
             print(s[5:].replace('0', ' ').replace('.', ' '))
         print('-'*len(my_strs[0]))
-

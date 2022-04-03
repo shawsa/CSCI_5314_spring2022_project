@@ -1,3 +1,7 @@
 .ipynb_checkpoints/*
 *-checkpoint.ipynb
 __pycache__
+
+*.org
+
+papers/*
