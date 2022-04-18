@@ -3,13 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from fruit_fly import (
-        Network,
-        NeuronCluster,
-        NeuronType,
-        SynapseType,
-        SynapseCluster,
-        InputSynapseCluster
-        )
+    Network,
+    NeuronCluster,
+    SynapseCluster,
+    InputSynapseCluster
+)
 
 INPUT_CURRENT = -20
 
@@ -17,7 +15,7 @@ TIME_START = 0.0
 TIME_FINAL = 50.0
 STEP_SIZE = 1e-3
 
-CUTOFF_TIME = 20
+CUTOFF_TIME = 30
 
 
 neuron_params = {
@@ -62,10 +60,10 @@ if __name__ == '__main__':
         n1_list.append(np.average(net.neurons['n1'].V))
         n2_list.append(np.average(net.neurons['n2'].V))
         n3_list.append(np.average(net.neurons['n3'].V))
-        s1_list.append(np.average(syn1.conductance(None)))
-        s2_list.append(np.average(syn2.conductance(net['n2'].V)))
-        s3_list.append(np.average(syn3.conductance(net['n3'].V)))
-        s4_list.append(np.average(syn4.conductance(net['n1'].V)))
+        s1_list.append(np.average(syn1.current()))
+        s2_list.append(np.average(syn2.current()))
+        s3_list.append(np.average(syn3.current()))
+        s4_list.append(np.average(syn4.current()))
         net.update(STEP_SIZE)
 
     fig, axes = plt.subplots(3, 1, figsize=(15, 7))

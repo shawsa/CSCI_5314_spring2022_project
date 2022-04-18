@@ -1,30 +1,43 @@
-'''A collection of classes to simulate the model from
-Su et al. 2017
+'''A collection of classes to simulate the model from Su et al. 2017
 https://www.nature.com/articles/s41467-017-00191-6
 '''
-import enum
 import numpy as np
 from .templates import SynapseClusterTemplate, NeuronClusterTemplate
 
-class SynapseType(enum.Enum):
-    TEST = {
-            'time_constant': 3.0,
-            'max_conductance': 0.005,
-            'reversal_potential': 0.0
-    }
+GABAA_PARAMS = {
+    'reversal_potential': -70.0,  # mV
+    'time_constant': 5.0  # ms
+}
+
+ACETYLCHOLINE_PARAMS = {
+    'reversal_potential': 0.0,  # mV
+    'time_constant': 20.0  # ms
+}
+
+NMDA_PARAMS = {
+    'reversal_potential': 0.0,  # mV
+    'time_constant': 100.0  # ms
+}
 
 
 class InputSynapseCluster(SynapseClusterTemplate):
-    def __init__(self, post: NeuronClusterTemplate, output_current: float):
+    def __init__(self,
+                 post: NeuronClusterTemplate,
+                 output_current: float,
+                 sd: float = 0):
+        self.name = (None, post.name)
         self.post = post
         post.add_input(self)
         self.post_size = post.size
+        self.output_current = output_current
+        self.sd = sd
 
-        self.output_current = output_current * np.ones(self.post_size,
-                                                       dtype=float)
-
-    def conductance(self, V):
-        return self.output_current
+    def current(self):
+        return self.output_current * (
+                1 + np.random.normal(
+                        0,
+                        scale=self.sd,
+                        size=self.post_size))
 
     def compute_update(self, delta_t):
         pass
@@ -40,6 +53,8 @@ class SynapseCluster(SynapseClusterTemplate):
                  time_constant: float,
                  max_conductance: float,
                  reversal_potential: float):
+
+        self.name = (pre.name, post.name)
 
         self.pre_size = pre.size
         self.post_size = post.size
@@ -63,9 +78,9 @@ class SynapseCluster(SynapseClusterTemplate):
     def __repr__(self):
         return str(self) + f' @ {id(self)}'
 
-    def conductance(self, V):
+    def current(self):
         return np.sum(self.max_conductance * self.gating, axis=0) * \
-                (V - self.reversal_potential)
+            (self.post.V - self.reversal_potential)
 
     def compute_update(self, delta_t):
         rhs = -self.gating/self.time_constant
@@ -74,3 +89,19 @@ class SynapseCluster(SynapseClusterTemplate):
 
     def store_update(self) -> None:
         self.gating = self.gating_update
+
+
+class NMDA(SynapseCluster):
+    ALPHA = 0.63
+
+    def current(self):
+        conductance = self.max_conductance / (
+                1 + 1.0 * np.exp(-0.062*self.post.V/3.57))
+        return np.sum(conductance * self.gating, axis=0) * \
+            (self.post.V - self.reversal_potential)
+
+    def compute_update(self, delta_t):
+        rhs = -self.gating/self.time_constant
+        self.gating_update = self.gating + delta_t*rhs
+        self.gating_update[self.pre.firing] += (
+            self.ALPHA * (1 - self.gating[self.pre.firing]))

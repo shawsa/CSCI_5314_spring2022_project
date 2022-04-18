@@ -15,7 +15,7 @@ class SynapseClusterTemplate(ABC):
         pass
 
     @abstractmethod
-    def conductance(self, V):
+    def current(self):
         pass
 
     @abstractmethod
@@ -48,4 +48,9 @@ class NetworkTemplate(ABC):
 
     @abstractmethod
     def update(self, delta_t):
+        pass
+
+class ProbeTemplate:
+    @abstractmethod
+    def log(self, time):
         pass
