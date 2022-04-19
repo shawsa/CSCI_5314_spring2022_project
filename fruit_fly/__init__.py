@@ -1,4 +1,3 @@
-from .neuron_cluster import *
-from .synapse_cluster import *
+from .neuron import *
+from .synapse import *
 from .network import *
-from .probe import *

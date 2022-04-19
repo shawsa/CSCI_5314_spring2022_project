@@ -6,51 +6,44 @@ https://www.nature.com/articles/s41467-017-00191-6
 from abc import ABC, abstractmethod
 
 
-class SynapseClusterTemplate(ABC):
+class SynapseTemplate(ABC):
     '''Not sure if we should Enum these
     or use subtyping...
     '''
-    @abstractmethod
-    def __init__(self, pre, post, kind):
-        pass
 
+    @property
     @abstractmethod
     def current(self):
         pass
 
     @abstractmethod
-    def compute_update(self, delta_t):
+    def compute_update(self, time_index: int, delta_t: float):
         pass
 
     @abstractmethod
     def store_update(self):
         pass
 
-
-class NeuronClusterTemplate(ABC):
     @abstractmethod
-    def __init__(self, name: str, size: int):
+    def reset(self):
+        pass
+
+
+class NeuronTemplate(ABC):
+
+    @property
+    @abstractmethod
+    def firing(self):
         pass
 
     @abstractmethod
-    def compute_update(self, delta_t):
+    def compute_update(self, time_index: int, delta_t: float):
         pass
 
     @abstractmethod
     def store_update(self):
         pass
 
-
-class NetworkTemplate(ABC):
     @abstractmethod
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def update(self, delta_t):
-        pass
-
-class ProbeTemplate:
-    @abstractmethod
-    def log(self, time):
+    def reset(self):
         pass
