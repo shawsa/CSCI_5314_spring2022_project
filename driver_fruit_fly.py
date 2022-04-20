@@ -3,18 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
-from fruit_fly import (
+from bio_neural_net import (
     Network,
     NeuronCluster,
-    InputNeuron,
+    InputNeuronCluster,
     DEFAULT_NEURON_PARAMS,
     REIP_PARAMS,
     SynapseCluster,
-    NMDA,
+    NMDASynapseCluster,
     NMDA_PARAMS,
     GABAA_PARAMS,
 )
-from fruit_fly.connections import (
+from connections import (
     EIP_labels,
     PEI_labels,
     PEN_labels,
@@ -28,19 +28,23 @@ from itertools import product
 
 # times in ms
 TIME_START = 0.0
-TIME_FINAL = 1000 * 10.0  # adjusted to match step size
-STEP_SIZE = 1e-3
+TIME_FINAL = 10.0  # adjusted to match step size
+STEP_SIZE = 1e-7
 
 steps = int((TIME_FINAL - TIME_START)/STEP_SIZE)
 ts = (np.arange(steps)-TIME_START) * STEP_SIZE
 
-net = Network(TIME_START, STEP_SIZE)
+net = Network(TIME_START, STEP_SIZE, steps)
 
-net.add(*(
+net.add_neurons(*(
     NeuronCluster(name, 10, **DEFAULT_NEURON_PARAMS)
     for name in (EIP_labels + PEI_labels + PEN_labels +
                  ['REIP', 'RPEN', 'RPEI'])
 ))
+
+#######################
+# Add input neurons
+#######################
 
 #######################
 # fix conductances?
@@ -53,26 +57,39 @@ for table in [
         EIP_PEN]:
     for col, row in product(table.columns, table.index):
         if table[col][row]:
-            NMDA(net[row],
-                 net[col],
-                 max_conductance=1,  # fix me!!!
-                 **NMDA_PARAMS)
+            net.add_synapse(
+                 row,
+                 col,
+                 NMDASynapseCluster(
+                     max_conductance=1,  # fix me!!!
+                     **NMDA_PARAMS))
 
 # EIP and REIP connections
 for name in EIP_labels:
-    NMDA(net[name], net['REIP'], max_conductance=1, **NMDA_PARAMS)
-    SynapseCluster(net['REIP'], net[name], max_conductance=5, **GABAA_PARAMS)
+    net.add_synapse(name,
+                    'REIP',
+                    NMDASynapseCluster(
+                        max_conductance=1,
+                        **NMDA_PARAMS))
+    net.add_synapse('REIP',
+                    name,
+                    SynapseCluster(
+                        max_conductance=5,
+                        **GABAA_PARAMS))
 
-SynapseCluster(net['REIP'], net['REIP'], max_conductance=1.6, **GABAA_PARAMS)
+net.add_synapse('REIP', 'REIP',
+                SynapseCluster(max_conductance=1.6, **GABAA_PARAMS))
 
 # PEI and RPEI connections
 for name in PEI_labels:
-    SynapseCluster(net['RPEI'], net[name], max_conductance=10, **GABAA_PARAMS)
+    net.add_synapse('RPEI', name,
+                    SynapseCluster(max_conductance=10, **GABAA_PARAMS))
 
 
 # PEN and RPEN connections
 for name in PEN_labels:
-    SynapseCluster(net['RPEN'], net[name], max_conductance=10, **GABAA_PARAMS)
+    net.add_synapse('RPEN', name,
+                    SynapseCluster(max_conductance=10, **GABAA_PARAMS))
 
 # add input neurons
 
