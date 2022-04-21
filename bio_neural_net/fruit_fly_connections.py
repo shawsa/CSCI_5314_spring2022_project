@@ -90,24 +90,24 @@ data[8, -2] = 1
 data[7, 1] = 1
 
 PEI_EIP = pd.DataFrame(
-            data = data,
-            columns = EIP_labels,
-            index = PEI_labels)
+            data=data,
+            columns=EIP_labels,
+            index=PEI_labels)
 tables.append(PEI_EIP)
 
 data = np.zeros((len(PEN_labels), len(EIP_labels)))
-for k in [-7, -8, 1, 10, 11]:
-    data += np.diag(np.ones(len(EIP_labels) - abs(k)), k = k)[:len(PEI_labels)]
+for k in [-7, -8, 1, 9, 10]:
+    data += np.diag(np.ones(len(EIP_labels) - abs(k)), k=k)[:len(PEI_labels)]
 for row in range(8):
     data[row, row + 2] = 1
 for row in range(8, 16):
-    data[row, row ] = 1
+    data[row, row] = 1
 data[8, -2] = 1
 data[7, 1] = 1
 PEN_EIP = pd.DataFrame(
-            data = data,
-            columns = EIP_labels,
-            index = PEN_labels)
+            data=data,
+            columns=EIP_labels,
+            index=PEN_labels)
 tables.append(PEN_EIP)
 
 # R_EIP to EIP
@@ -115,9 +115,9 @@ tables.append(PEN_EIP)
 data = np.zeros((len(EIP_labels), len(PEI_labels)))
 data[1:-1] = np.eye(16)
 EIP_PEI = pd.DataFrame(
-            data = data,
-            columns = PEI_labels,
-            index = EIP_labels)
+            data=data,
+            columns=PEI_labels,
+            index=EIP_labels)
 tables.append(EIP_PEI)
 
 # R_PEI to PEI

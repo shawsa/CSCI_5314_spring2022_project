@@ -3,16 +3,21 @@ from .neuron import NeuronCluster, InputNeuronCluster
 from .synapse import SynapseCluster
 
 class Network:
-    def __init__(self, start_time: float, dt: float, num_steps: int):
-        self.start_time = start_time
-        self.dt = dt
-        self.num_steps = num_steps
+    def __init__(self):
+        self.start_time = None
+        self.dt = None
+        self.num_steps = None
 
         self.time = None
         self.time_index = None
 
         self.neurons = {}
         self.synapses = {}
+
+    def set_time_params(self, start_time: float, dt: float, num_steps: int):
+        self.start_time = start_time
+        self.dt = dt
+        self.num_steps = num_steps
 
     def add_neurons(self, *args):
         for arg in args:
@@ -45,6 +50,7 @@ class Network:
         syn.pre_size = self[pre].size
 
     def reset(self):
+        assert self.start_time is not None
         self.time = self.start_time
         self.time_index = 0
         for neuron in self.neurons.values():
