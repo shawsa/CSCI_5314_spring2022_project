@@ -35,7 +35,7 @@ from .fruit_fly_connections import (
     EIP_PEN
 )
 
-from itertools import product
+from itertools import product, chain
 
 def get_fruit_fly_network():
     net = Network()
@@ -45,8 +45,10 @@ def get_fruit_fly_network():
 
     net.add_neurons(
         *(NeuronCluster(name, 10, **DEFAULT_NEURON_PARAMS)
-          for name in (EIP_labels + PEI_labels + PEN_labels +
-                       ['REIP', 'RPEN', 'RPEI'])),
+          for name in (EIP_labels + PEI_labels + PEN_labels)),
+        NeuronCluster('RPEN', 10, **DEFAULT_NEURON_PARAMS),
+        NeuronCluster('RPEI', 10, **DEFAULT_NEURON_PARAMS),
+        NeuronCluster('REIP', 10, **REIP_PARAMS),
         *(InputNeuronCluster(name, 10, 50)
           for name in EB_inputs),
         InputNeuronCluster('rot_CW', 10, 3150),
@@ -67,8 +69,6 @@ def get_fruit_fly_network():
                 overlaps = sum(
                     (src.loc[row] == 2) &
                     (trg.loc[col] == 1))
-                if overlaps == 0:
-                    print(f'No overlaps between {row}, {col}')
                 if table is PEN_EIP and row in ['EIP0', 'EIP17']:
                     overlaps = 3  # asterix in sup table 3
                 net.add_synapse(
@@ -86,9 +86,9 @@ def get_fruit_fly_network():
                             max_conductance=1,
                             **NMDA_PARAMS))
         net.add_synapse('REIP',
-                        name,
+                        name, 
                         SynapseCluster(
-                            max_conductance=5,
+                            max_conductance=5,  # same from paper
                             **GABAA_PARAMS))
 
     net.add_synapse('REIP', 'REIP',
@@ -104,10 +104,16 @@ def get_fruit_fly_network():
         net.add_synapse('RPEN', name,
                         SynapseCluster(max_conductance=10, **GABAA_PARAMS))
 
-    # input connections
+    #  input connections
+    # for src in EB_inputs:
+    #     src_lookup = src[:-6] + 'C'
+    #     for trg in EIP_EBC.loc[EIP_EBC[src_lookup] == 1].index:
     for src in EB_inputs:
-        src_lookup = src[:-6] + 'C'
-        for trg in EIP_EBC.loc[EIP_EBC[src_lookup] == 1].index:
+        src_lookup = src[:-6]
+        for trg in chain(
+                PEI_EBC.loc[PEI_EBC[src_lookup+'C'] == 2].index,
+                PEN_EBP.loc[PEN_EBP[src_lookup+'P'] == 2].index,
+                ):
             net.add_synapse(src, trg,
                             SynapseCluster(max_conductance=2.1,
                                            **ACETYLCHOLINE_PARAMS))

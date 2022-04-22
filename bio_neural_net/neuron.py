@@ -44,6 +44,8 @@ class NeuronCluster:
 
     def compute_update(self, time_index: int, dt: float) -> None:
         '''Use forward Euler to compute the next time step.'''
+        # if self.name == 'RPEN':
+        #     import ipdb; ipdb.set_trace()
         current = sum(syn.current(self.V)
                       for syn in self.inputs)
         rhs = (-self.gL*(self.V - self.VL) - current)/self.Cm
@@ -52,7 +54,7 @@ class NeuronCluster:
         for syn in self.outputs:
             syn.compute_update(dt, self.firing)
         # check if firing
-        self.firing = self.V >= self.threshold
+        self.firing = (self._update >= self.threshold)
         if self.firing:
             self._update = self.VL
             self.firing_time_indices.append(time_index)

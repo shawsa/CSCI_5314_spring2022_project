@@ -28,8 +28,8 @@ from itertools import product
 
 # times in s
 start_time = 0.0
-end_time = .1  # 10.0  # adjusted to match step size
-dt = 1e-6
+end_time = 10  # 10.0  # adjusted to match step size
+dt = 1e-5
 
 pickle_dir = 'sim_data'
 file_name = 'sim1.pickle'
@@ -37,7 +37,7 @@ file_name = 'sim1.pickle'
 # visual cues - stimulate the EB (EIP neurons)
 EB_INPUT_FREQ = 50
 cue_dict = {
-    'EB-L1_input': [(0, end_time/2)],
+    'EB-L1_input': [(0, end_time/4)],
     'RPEN_input': [(0, end_time)],
 }
 
@@ -61,10 +61,7 @@ net.reset()
 #######################
 if __name__ == '__main__':
     # net.print_full()
-    voltage = []
-    gating = []
-    current = []
-    neurons = ['EIP5', 'PEN5', 'RPEN']
+    neurons = ['EIP13', 'EIP12', 'PEI3', 'PEI4']
     voltages = [[] for _ in neurons]
     for step in tqdm(range(steps)):
         for i, name in enumerate(neurons):
@@ -82,7 +79,7 @@ if __name__ == '__main__':
     print(f'Total spikes: {total_spikes}')
 
     for name, Vs in zip(neurons, voltages):
-        plt.plot(ts, Vs, label=name)
+        plt.plot(ts, Vs, '.-', label=name)
     plt.ylabel('voltage (mV)')
     plt.legend()
 
