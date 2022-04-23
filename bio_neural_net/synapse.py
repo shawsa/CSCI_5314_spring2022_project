@@ -67,7 +67,7 @@ class SynapseCluster:
 
 class NMDASynapseCluster(SynapseCluster):
     ALPHA = 0.63
-    MG2 = 1.0
+    MG2 = 0.1  # different from paper
 
     def current(self, V):
         conductance = self.max_conductance / (

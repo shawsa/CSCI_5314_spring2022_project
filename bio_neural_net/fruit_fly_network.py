@@ -62,7 +62,7 @@ def get_fruit_fly_network():
             (EIP_PEI, EIP_PB, PEI_PB, 5),
             (EIP_PEN, EIP_PB, PEN_PB, 6),
             (PEI_EIP, PEI_EBC, EIP_EBC, 4),
-            (PEN_EIP, PEN_EBP, EIP_EBP, 6)]:
+            (PEN_EIP, PEN_EBP, EIP_EBP, 4.5)]:  # 6
 
         for col, row in product(table.columns, table.index):
             if table[col][row]:
