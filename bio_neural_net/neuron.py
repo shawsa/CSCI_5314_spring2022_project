@@ -5,19 +5,6 @@ https://www.nature.com/articles/s41467-017-00191-6
 
 import numpy as np
 
-DEFAULT_NEURON_PARAMS = {
-    'Cm': 0.1,  # nF
-    'VL': -70.0,  # mV
-    'threshold': -50.0,  # mV
-    'gL': 0.1e-9 / 15e-3 / 1e-9  # nS
-}
-
-REIP_PARAMS = {
-    **DEFAULT_NEURON_PARAMS,
-    'Cm': 0.01,  # nF
-    'gL': 0.01e-9 / 15e-3 / 1e-9  # nS
-}
-
 class NeuronCluster:
     def __init__(self,
                  name: str,

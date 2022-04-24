@@ -5,7 +5,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bio_neural_net.fruit_fly_connections import EIP_EBC
+from bio_neural_net.fruit_fly_network import EB_INNERVATION
 
 pickle_dir = 'sim_data'
 file_name = 'sim2.pickle'
@@ -41,15 +41,17 @@ rates_dict = {
 }
 
 EB_rates = {
-        name: sum(rates_dict[neuron]
-                  for neuron in EIP_EBC.loc[EIP_EBC[name] == 1.0].index)
-        for name in EIP_EBC.columns}
+        region: sum(rates_dict[neuron]
+                  for neuron in EB_INNERVATION.loc[EB_INNERVATION[region] == 1.0].index)
+        for region in EB_INNERVATION.columns}
 
 cue_labels = {
         0: 'cue on',
         1: 'cue off',
         4: 'CW rotation',
-        7: 'CCW rotation'
+        5: 'CCW rotation',
+        6: 'stop',
+        7: 'forward walking'
 }
 x_tick_locs = list(range(11))
 x_labels = [str(index) for index in range(11)]

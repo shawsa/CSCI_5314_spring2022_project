@@ -1,26 +1,17 @@
 #!/usr/bin/python3
-import matplotlib.pyplot as plt
-import numpy as np
 import os
 import pickle
 
+import matplotlib.pyplot as plt
+import numpy as np
 from tqdm import tqdm
-from bio_neural_net import (
-    Network,
-    NeuronCluster,
-    InputNeuronCluster,
-    DEFAULT_NEURON_PARAMS,
-    REIP_PARAMS,
-    SynapseCluster,
-    NMDASynapseCluster,
-    NMDA_PARAMS,
-    GABAA_PARAMS,
-    ACETYLCHOLINE_PARAMS
+
+from bio_neural_net.fruit_fly_network import (
+        get_fruit_fly_network,
+        INPUT_NEURONS,
+        INPUT_SYNAPSE_CONDUCTANCE,
+        CONDUCTANCE_DICT
 )
-
-from bio_neural_net.fruit_fly_network import get_fruit_fly_network
-
-from itertools import product
 
 ######################################################################
 # Experiment Parameters
@@ -28,18 +19,46 @@ from itertools import product
 
 # times in s
 start_time = 0.0
-end_time = 10  # 10.0  # adjusted to match step size
-dt = 1e-5
+end_time = 1.0  # adjusted to match step size
+dt = 1e-4
 
 pickle_dir = 'sim_data'
 file_name = 'sim1.pickle'
 
+# changed params
+input_neurons = INPUT_NEURONS.copy()
+input_synapse_conductance = INPUT_SYNAPSE_CONDUCTANCE.copy()
+conductance_dict = CONDUCTANCE_DICT.copy()
+
+# input_neurons['EB-L1_input']['freq'] = 20
+# conductance_dict[('EIP', 'PEI')] = 10
+# conductance_dict[('PEI', 'EIP')] = 10
+# conductance_dict[('EIP', 'REIP')] = 1
+# conductance_dict[('REIP', 'EIP')] = 5
+
+conductance_dict[('EIP', 'PEI')] = 12
+conductance_dict[('PEI', 'EIP')] = 8
+
+conductance_dict[('EIP', 'REIP')] = 5
+conductance_dict[('REIP', 'EIP')] = 40
+
+conductance_dict[('EIP', 'PEN')] = 12
+conductance_dict[('PEN', 'EIP')] = 8
+
+
+input_neurons['EB-L1_input']['freq'] = 60
+
 # visual cues - stimulate the EB (EIP neurons)
-EB_INPUT_FREQ = 50
 cue_dict = {
-    'EB-L1_input': [(0, end_time/4)],
+    'EB-L1_input': [(0, end_time/2)],
     'RPEN_input': [(0, end_time)],
+
+    # 'rot_CW': [(end_time/2, end_time)],
+    # 'RPEI_input': [(end_time/2, end_time)]
 }
+
+# record
+neurons = ['EIP4', 'EIP4', 'EIP3', 'EIP12']
 
 ######################################################################
 # End Experiment Parameters
@@ -48,7 +67,12 @@ cue_dict = {
 steps = int((end_time - start_time)/dt)
 ts = (np.arange(steps) - start_time) * dt
 
-net = get_fruit_fly_network()
+print('Constructing network . . . ', end='')
+net = get_fruit_fly_network(
+        input_neurons=input_neurons,
+        conductance_dict=conductance_dict
+    )
+print('complete.')
 
 for name, intervals in cue_dict.items():
     net[name].intervals += intervals
@@ -61,7 +85,6 @@ net.reset()
 #######################
 if __name__ == '__main__':
     # net.print_full()
-    neurons = ['EIP13', 'EIP12', 'PEI3', 'PEI4']
     voltages = [[] for _ in neurons]
     for step in tqdm(range(steps)):
         for i, name in enumerate(neurons):

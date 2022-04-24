@@ -1,139 +1,202 @@
 #!/usr/bin/python3
 import numpy as np
+import os.path
+import pandas as pd
+from itertools import product, chain
 
 from .network import Network
 
-from .neuron import (
-    NeuronCluster,
-    InputNeuronCluster,
-    DEFAULT_NEURON_PARAMS,
-    REIP_PARAMS,
-)
+from .neuron import NeuronCluster, InputNeuronCluster
 
-from .synapse import (
-    SynapseCluster,
-    NMDASynapseCluster,
-    NMDA_PARAMS,
-    GABAA_PARAMS,
-    ACETYLCHOLINE_PARAMS
-)
+from .synapse import SynapseCluster, NMDASynapseCluster
 
-from .fruit_fly_connections import (
-    EIP_labels,
-    PEI_labels,
-    PEN_labels,
-    EIP_EBC,
-    PEI_EBC,
-    EIP_EBP,
-    PEN_EBP,
-    EIP_PB,
-    PEI_PB,
-    PEN_PB,
-    PEI_EIP,
-    PEN_EIP,
-    EIP_PEI,
-    EIP_PEN
-)
+PATH = os.path.dirname(os.path.realpath(__file__))
 
-from itertools import product, chain
+EB_INNERVATION = pd.read_csv(
+        os.path.join(PATH, 'EB_innervation.csv'),
+        index_col=0)
+PB_INNERVATION = pd.read_csv(
+        os.path.join(PATH, 'PB_innervation.csv'),
+        index_col=0)
 
-def get_fruit_fly_network():
+EIP_LABELS = [f'EIP{num}' for num in range(18)]
+PEI_LABELS = [f'PEI{num}' for num in range(16)]
+PEN_LABELS = [f'PEN{num}' for num in range(16)]
+
+CONDUCTANCE_DICT = {
+        ('EIP', 'PEI'): 5,
+        ('EIP', 'PEN'): 6,
+        ('EIP', 'REIP'): 1,
+        ('PEI', 'EIP'): 4,
+        ('PEN', 'EIP'): 6,
+        ('REIP', 'EIP'): 5,
+        ('REIP', 'REIP'): 1.6,
+        ('RPEI', 'PEI'): 10,
+        ('RPEN', 'PEN'): 10
+}
+
+DEFAULT_NEURON_PARAMS = {
+    'size': 10,
+    'Cm': 0.1,  # nF
+    'VL': -70.0,  # mV
+    'threshold': -50.0,  # mV
+    'gL': 0.1e-9 / 15e-3 / 1e-9  # nS
+}
+
+REIP_PARAMS = {
+    **DEFAULT_NEURON_PARAMS,
+    'Cm': 0.01,  # nF
+    'gL': 0.01e-9 / 15e-3 / 1e-9  # nS
+}
+
+GABAA_PARAMS = {
+    'reversal_potential': -70.0,  # mV
+    'time_constant': 0.005  # s
+}
+
+ACETYLCHOLINE_PARAMS = {
+    'reversal_potential': 0.0,  # mV
+    'time_constant': 0.020  # s
+}
+
+NMDA_PARAMS = {
+    'reversal_potential': 0.0,  # mV
+    'time_constant': 0.100  # s
+}
+
+INPUT_NEURONS = {
+    **{name+'_input': {'size': 10, 'freq': 50}
+       for name in EB_INNERVATION.columns},
+    'rot_CW': {'size': 10, 'freq': 315},
+    'rot_CCW': {'size': 10, 'freq': 315},
+    'RPEN_input': {'size': 10, 'freq': 20},
+    'RPEI_input': {'size': 10, 'freq': 20}
+}
+
+INPUT_SYNAPSE_CONDUCTANCE = {
+    **{name+'_input': 2.1 for name in EB_INNERVATION.columns},
+    'rot_CW': 0.3,
+    'rot_CCW': 0.3,
+    'RPEN_input': 10,
+    'RPEI_input': 10
+}
+
+def get_fruit_fly_network(
+            EIP_params=DEFAULT_NEURON_PARAMS,
+            PEI_params=DEFAULT_NEURON_PARAMS,
+            PEN_params=DEFAULT_NEURON_PARAMS,
+            REIP_params=REIP_PARAMS,
+            RPEI_params=DEFAULT_NEURON_PARAMS,
+            RPEN_params=DEFAULT_NEURON_PARAMS,
+            GABAA_params=GABAA_PARAMS,
+            acetylcholine_params=ACETYLCHOLINE_PARAMS,
+            NMDA_params=NMDA_PARAMS,
+            conductance_dict=CONDUCTANCE_DICT,
+            input_neurons=INPUT_NEURONS,
+            input_synapse_conductance=INPUT_SYNAPSE_CONDUCTANCE
+        ):
     net = Network()
 
-    EB_inputs = [f'EB-R{num}_input' for num in range(8, 0, -1)] + \
-                [f'EB-L{num}_input' for num in range(1, 9)]
-
     net.add_neurons(
-        *(NeuronCluster(name, 10, **DEFAULT_NEURON_PARAMS)
-          for name in (EIP_labels + PEI_labels + PEN_labels)),
-        NeuronCluster('RPEN', 10, **DEFAULT_NEURON_PARAMS),
-        NeuronCluster('RPEI', 10, **DEFAULT_NEURON_PARAMS),
-        NeuronCluster('REIP', 10, **REIP_PARAMS),
-        *(InputNeuronCluster(name, 10, 50)
-          for name in EB_inputs),
-        InputNeuronCluster('rot_CW', 10, 3150),
-        InputNeuronCluster('rot_CCW', 10, 3150),
-        InputNeuronCluster('RPEN_input', 10, 200),
-        InputNeuronCluster('RPEI_input', 10, 200)
+        *(NeuronCluster(name, **EIP_params) for name in EIP_LABELS),
+        *(NeuronCluster(name, **PEI_params) for name in PEI_LABELS),
+        *(NeuronCluster(name, **PEN_params) for name in PEN_LABELS),
+        NeuronCluster('RPEN', **RPEN_params),
+        NeuronCluster('RPEI', **RPEI_params),
+        NeuronCluster('REIP', **REIP_params),
+        *(InputNeuronCluster(key, **params)
+          for key, params in input_neurons.items())
     )
 
-    # synapses
-    for table, src, trg, conductance_factor in [
-            (EIP_PEI, EIP_PB, PEI_PB, 5),
-            (EIP_PEN, EIP_PB, PEN_PB, 6),
-            (PEI_EIP, PEI_EBC, EIP_EBC, 4),
-            (PEN_EIP, PEN_EBP, EIP_EBP, 4.5)]:  # 6
-
-        for col, row in product(table.columns, table.index):
-            if table[col][row]:
-                overlaps = sum(
-                    (src.loc[row] == 2) &
-                    (trg.loc[col] == 1))
-                if table is PEN_EIP and row in ['EIP0', 'EIP17']:
-                    overlaps = 3  # asterix in sup table 3
-                net.add_synapse(
-                     row,
-                     col,
-                     NMDASynapseCluster(
-                         max_conductance=conductance_factor*overlaps,
-                         **NMDA_PARAMS))
+    # EIP, PEI, PEN connections
+    for table in [EB_INNERVATION, PB_INNERVATION]:
+        for src, trg in product(table.index, table.index):
+            overlaps = sum(
+                (table.loc[src] == 2) &
+                (table.loc[trg] == 1))
+            if overlaps == 0:  # no connections
+                continue
+            # if src[:3] == 'PEN' and trg in ['EIP0', 'EIP17']:
+            #     overlaps = 3  # asterix in sup table 3
+            factor = conductance_dict[(src[:3], trg[:3])]
+            net.add_synapse(
+                src,
+                trg,
+                NMDASynapseCluster(
+                    max_conductance=overlaps * factor,
+                    **NMDA_params))
 
     # EIP and REIP connections
-    for name in EIP_labels:
+    for name in EIP_LABELS:
         net.add_synapse(name,
                         'REIP',
                         NMDASynapseCluster(
-                            max_conductance=1,
-                            **NMDA_PARAMS))
+                            max_conductance=conductance_dict[('EIP', 'REIP')],
+                            **NMDA_params))
         net.add_synapse('REIP',
-                        name, 
-                        SynapseCluster(
-                            max_conductance=5,  # same from paper
-                            **GABAA_PARAMS))
+                        name,
+                        NMDASynapseCluster(
+                            max_conductance=conductance_dict[('REIP', 'EIP')],
+                            **GABAA_params))
 
-    net.add_synapse('REIP', 'REIP',
-                    SynapseCluster(max_conductance=1.6, **GABAA_PARAMS))
+    net.add_synapse('REIP',
+                    'REIP',
+                    SynapseCluster(
+                        max_conductance=conductance_dict[('REIP', 'REIP')],
+                        **GABAA_params))
 
     # PEI and RPEI connections
-    for name in PEI_labels:
+    for name in PEI_LABELS:
         net.add_synapse('RPEI', name,
-                        SynapseCluster(max_conductance=10, **GABAA_PARAMS))
+                        SynapseCluster(
+                            max_conductance=conductance_dict[('RPEI', 'PEI')],
+                            **GABAA_params))
 
     # PEN and RPEN connections
-    for name in PEN_labels:
+    for name in PEN_LABELS:
         net.add_synapse('RPEN', name,
-                        SynapseCluster(max_conductance=10, **GABAA_PARAMS))
+                        SynapseCluster(
+                            max_conductance=conductance_dict[('RPEN', 'PEN')],
+                            **GABAA_params))
 
-    #  input connections
-    # for src in EB_inputs:
-    #     src_lookup = src[:-6] + 'C'
-    #     for trg in EIP_EBC.loc[EIP_EBC[src_lookup] == 1].index:
-    for src in EB_inputs:
-        src_lookup = src[:-6]
-        for trg in chain(
-                PEI_EBC.loc[PEI_EBC[src_lookup+'C'] == 2].index,
-                PEN_EBP.loc[PEN_EBP[src_lookup+'P'] == 2].index,
-                ):
-            net.add_synapse(src, trg,
-                            SynapseCluster(max_conductance=2.1,
-                                           **ACETYLCHOLINE_PARAMS))
+    # input connections
+    for region in EB_INNERVATION.columns:
+        for trg in EB_INNERVATION.loc[EB_INNERVATION[region] == 2].index:
+            net.add_synapse(
+                region+'_input',
+                trg,
+                SynapseCluster(
+                    max_conductance=input_synapse_conductance[region+'_input'],
+                    **acetylcholine_params))
 
-    net.add_synapse('RPEN_input', 'RPEN',
-                    SynapseCluster(max_conductance=10,
-                                   **ACETYLCHOLINE_PARAMS))
+    net.add_synapse(
+        'RPEN_input',
+        'RPEN',
+        SynapseCluster(
+            max_conductance=input_synapse_conductance['RPEN_input'],
+            **acetylcholine_params))
 
-    net.add_synapse('RPEI_input', 'RPEI',
-                    SynapseCluster(max_conductance=10,
-                                   **ACETYLCHOLINE_PARAMS))
+    net.add_synapse(
+        'RPEI_input',
+        'RPEI',
+        SynapseCluster(
+            max_conductance=input_synapse_conductance['RPEI_input'],
+            **acetylcholine_params))
 
     for trg in [f'PEN{num}' for num in range(8)]:
-        net.add_synapse('rot_CW', trg,
-                        SynapseCluster(max_conductance=0.3,
-                                       **ACETYLCHOLINE_PARAMS))
+        net.add_synapse(
+            'rot_CW',
+            trg,
+            SynapseCluster(
+                max_conductance=input_synapse_conductance['rot_CW'],
+                **acetylcholine_params))
 
     for trg in [f'PEN{num}' for num in range(8, 16)]:
-        net.add_synapse('rot_CCW', trg,
-                        SynapseCluster(max_conductance=0.3,
-                                       **ACETYLCHOLINE_PARAMS))
+        net.add_synapse(
+            'rot_CCW',
+            trg,
+            SynapseCluster(
+                max_conductance=input_synapse_conductance['rot_CCW'],
+                **acetylcholine_params))
 
     return net
