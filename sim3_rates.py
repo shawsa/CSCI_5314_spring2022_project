@@ -8,9 +8,9 @@ import numpy as np
 from bio_neural_net.fruit_fly_network import EB_INNERVATION
 
 pickle_dir = 'sim_data'
-file_name = 'sim2.pickle'
+file_name = 'sim3.pickle'
 image_dir = 'images'
-image_prefix = 'sim2_'
+image_prefix = 'sim3_'
 
 with open(os.path.join(pickle_dir, file_name), 'rb') as f:
     ts, spike_dict = pickle.load(f)
